@@ -1,6 +1,6 @@
 import re
 
-from mal_types import Symbol, List, Array, String, HashMap
+from mal_types import Symbol, List, Array, String, HashMap, Keyword
 
 
 class Reader:
@@ -81,18 +81,6 @@ def read_sequence(reader, typ, start, end):
     return ast
 
 
-def read_string(reader):
-    token = reader.next()
-    if token[0] != '"':
-        raise Exception('Expected starting character "')
-    if len(token) <= 1:
-        raise Exception('Expected ", found EOF')
-    if token[-1] != '"':
-        raise Exception('Expected ", found EOF')
-
-    return String(token[1:-1])
-
-
 def read_list(reader):
     return read_sequence(reader, List, "(", ")")
 
@@ -113,16 +101,27 @@ INT_RE = re.compile(r"-?[0-9]+$")
 STRING_RE = re.compile(r'"(?:[\\].|[^\\"])*"')
 
 
+def _unescape(s):
+    return s.replace('\\\\', '\u029e').replace('\\"', '"').replace('\\n', '\n').replace('\u029e', '\\')
+
+
 def read_atom(reader):
     token = reader.next()
     if re.match(INT_RE, token):
         return int(token)
 
     if re.match(STRING_RE, token):
-        return String(token[1:-1])
+        return String(_unescape(token[1:-1]))
     if token[0] == '"':
         raise Exception('Expected \'"\', found EOF')
-
+    if token[0] == ':':
+        return Keyword(token)
+    if token == "true":
+        return True
+    if token == "false":
+        return False
+    if token == "nil":
+        return None
     else:
         return Symbol(token)
 
