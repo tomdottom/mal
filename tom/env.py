@@ -2,23 +2,25 @@ class Env(dict):
     MISSING = object()
 
     def __init__(self, outer=None, binds=[], exprs=[]):
+        self.data = {}
         self.outer = outer
         for k, v in zip(binds, exprs):
-            self[k] = v
+            self.data[k] = v
 
     def set(self, symbol, value):
-        self[symbol] = value
+        self.data[symbol] = value
         return value
 
     def find(self, symbol):
-        try:
-            value = self[symbol]
-        except KeyError:
-            value = self.MISSING
-        if value is not self.MISSING:
-            return value
-        if self.outer is not None:
-            return self.outer.find(symbol)
+        _env = self
+        while True:
+            if symbol in _env.data:
+                return _env.data[symbol]
+
+            if _env.outer is None:
+                return self.MISSING
+
+            _env = _env.outer
 
     def get(self, symbol):
         value = self.find(symbol)

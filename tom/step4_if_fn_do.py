@@ -63,9 +63,11 @@ def EVAL(ast, env):
         return EVAL(a2, let_env)
 
     if a0 == "do":
-        for a in ast[1:]:
-            value = EVAL(a, env)
-        return value
+        el = eval_ast(mal_types.List(ast[1:]), env)
+        return el[-1]
+        # for a in ast[1:]:
+        #     value = EVAL(a, env)
+        # return value
 
     if a0 == "fn*":
         binds, ast = ast[1:3]
