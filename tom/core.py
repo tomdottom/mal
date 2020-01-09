@@ -1,5 +1,6 @@
 import mal_types
 import printer
+import reader
 
 
 def pr_str(*exp, print_readably=True, join_str=" "):
@@ -74,23 +75,56 @@ def eq(a, b):
 
     return False
 
+
+def read_string(str):
+    return reader.read_str(str)
+
+
+def slurp(str):
+    with open(str) as fh:
+        contents = fh.read()
+    return mal_types.String(contents)
+
+
+def reset(atom, value):
+    atom.ref = value
+    return value
+
+
 ns = {
     "+": lambda a, b: a + b,
     "-": lambda a, b: a - b,
     "*": lambda a, b: a * b,
     "/": lambda a, b: int(a / b),
 
+    "atom": lambda ref: mal_types.Atom(ref),
+    "atom?": lambda x: isinstance(x, mal_types.Atom),
+    "deref": lambda atom: atom.ref,
+    "reset!": reset,
+
     "pr-str": pr_str,
     "prn": prn,
     "println": prn_ln,
+
     "str": str_,
+    "read-string": read_string,
+
+    "slurp": slurp,
+
     "list": lst,
     "list?": is_lst,
     "empty?": is_empty,
     "count": count,
+
     ">": gt,
     "<": lt,
     ">=": gte,
     "<=": lte,
     "=": eq,
 }
+
+defs = [
+    "(def! not (fn* (a) (if a false true)))",
+    "(def! load-file (fn* (path) (eval (read-string (str \"(do \" (slurp path) \" \nnil )\")))))",
+    # "(def! swap! (fn* (a f & args) (do (reset! a (f (deref a) args)) (deref a))))",
+]

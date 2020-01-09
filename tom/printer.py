@@ -1,13 +1,4 @@
-from mal_types import Symbol, List, Array, String, HashMap, Function, Keyword
-
-
-# def _escape(s):
-#     return (
-#         s
-#         .replace("\\", "\\\\")
-#         .replace('"', '\\"')
-#         .replace('\n', '\\n')
-#     )
+from mal_types import Symbol, List, Array, String, HashMap, Function, Keyword, Atom, Comment
 
 
 def _escape(s):
@@ -35,9 +26,15 @@ def pr_str(exp, print_readably=True):
         if print_readably:
             return String(f'"{_escape(exp)}"')
         return exp
+    elif isinstance(exp, Atom):
+        return f"(atom {pr_str(exp.ref)})"
     elif isinstance(exp, Keyword):
         return String(exp)
     elif isinstance(exp, Function):
         return String("#<function>")
+    elif isinstance(exp, Comment):
+        return String(exp)
+    elif callable(exp):
+        return String("#<function>")
     else:
-        raise Exception("Bar")
+        raise Exception(f"Do not know how to print expression: {exp}")

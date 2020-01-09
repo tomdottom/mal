@@ -45,15 +45,21 @@ def EVAL(ast, env, _stats={'depth': 0, 'loop': 0}):
 
     while True:
         _stats['loop'] += 1
+
         if not isinstance(ast, mal_types.List):
             _stats['depth'] -= 1
             return eval_ast(ast, env)
+
+        ast = mal_types.List(i for i in ast if not isinstance(i, mal_types.Comment))
 
         if len(ast) == 0:
             _stats['depth'] -= 1
             return ast
 
         a0 = ast[0]
+
+        if isinstance(a0, mal_types.String) and a0.startswith(";"):
+            continue
 
         if a0 == "def!":
             a1, a2 = ast[1:3]
@@ -114,12 +120,11 @@ def EVAL(ast, env, _stats={'depth': 0, 'loop': 0}):
         if a0 == "if":
             a1 = ast[1]
             result = EVAL(a1, env)
-            if len(ast) < 4:
-                return None
-            elif result is not None and result is not False:
+            if result is not None and result is not False:
                 a2 = ast[2]
-                # return EVAL(a2, env)
                 ast = a2
+            elif len(ast) < 4:
+                return None
             else:
                 a3 = ast[3]
                 # return EVAL(a3, env)
@@ -127,12 +132,20 @@ def EVAL(ast, env, _stats={'depth': 0, 'loop': 0}):
 
             continue
 
+        if a0 == "swap!":
+            atom = eval_ast(ast[1], env)
+            fn = EVAL(ast[2], env)
+            args = ast[3:]
+            atom.ref = fn(atom.ref, *args)
+            return atom.ref
 
+        # Apply
         el = eval_ast(ast, env)
         fn, args = el[0], el[1:]
         if hasattr(fn, '__ast__'):
             ast = fn.__ast__
             params = fn.__params__
+            env = fn.__env__
             try:
                 args = mal_types.List(args)
                 vargs_index = params.index('&')
@@ -153,7 +166,6 @@ def EVAL(ast, env, _stats={'depth': 0, 'loop': 0}):
             return fn(*args)
 
 
-
 def PRINT(exp):
     return printer.pr_str(exp, True)
 
@@ -161,6 +173,8 @@ def PRINT(exp):
 ENV = env_module.Env()
 for k, v in core.ns.items():
     ENV.set(k, v)
+ENV.set(mal_types.Symbol("eval"), lambda ast: EVAL(ast, ENV))
+ENV.set(mal_types.Symbol('*ARGV*'), mal_types.List((mal_types.String(a) for a in sys.argv[2:])))
 
 
 def rep(str):
@@ -170,17 +184,24 @@ def rep(str):
 def readline(prompt):
     sys.stdout.write(prompt)
     sys.stdout.flush()
-    return sys.stdin.readline().strip()
+    return sys.stdin.readline()
 
 
-rep("(def! not (fn* (a) (if a false true)))")
+for d in core.defs:
+    rep(d)
+
+
+if len(sys.argv) >= 2:
+    rep('(load-file "' + sys.argv[1] + '")')
+    sys.exit(0)
+
 
 if __name__ == "__main__":
     while True:
         try:
             line = readline("user> ")
-            if not line:
-                break
-            print(rep(line))
+            if line is '': break
+            if line == "\n": continue
+            print(rep(line.strip()))
         except Exception as e:
             print("Error", e)

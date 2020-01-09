@@ -1,6 +1,6 @@
 import re
 
-from mal_types import Symbol, List, Array, String, HashMap, Keyword
+from mal_types import Symbol, List, Array, String, HashMap, Keyword, Comment
 
 
 class Reader:
@@ -17,7 +17,8 @@ class Reader:
     def peek(self):
         if self.current_position > self.max_index:
             return None
-        return self.tokens[self.current_position]
+        token = self.tokens[self.current_position]
+        return token
 
 
 def read_str(str):
@@ -32,6 +33,9 @@ def tokenize(str):
 
 def read_form(reader):
     token = reader.peek()
+    if token[0] == ";":
+        reader.next()
+        return Comment(token)
     if token == "'":
         reader.next()
         return List((Symbol("quote"), read_form(reader)))
