@@ -1,0 +1,39 @@
+EXPRESSION
+    = (
+        LIST / VECTOR / HASHMAP /
+        NUMBER / SYMBOL / KEYWORD / STRING /
+        QUOTED / QUASI_QUOTED / SPLICE_UNQUOTED / UNQUOTED / DEREFED / META /
+        COMMENT / WHITE_SPACE
+    ) WHITE_SPACE? COMMENT?
+LIST                    = LEFT_PAREN EXPRESSION* RIGHT_PAREN
+VECTOR                  = LEFT_BRACKET EXPRESSION* RIGHT_BRACKET
+HASHMAP_KEY             = (KEYWORD / STRING) WHITE_SPACE
+HASHMAP                 = LEFT_CURLY_BRACKET WHITE_SPACE? (HASHMAP_KEY EXPRESSION)* WHITE_SPACE? RIGHT_CURLY_BRACKET
+NUMBER                  = ~r"(-)?[\d]+"
+SYMBOL                  = ~r"[\*\+\-a-zA-Z]+[\*\+\-\>a-zA-Z0-9]*"
+STRING                  = OPEN_QUOTE ~r"([^\"\\]|\\.)*" CLOSE_QUOTE
+QUOTED                  = QUOTED_OPEN EXPRESSION
+QUASI_QUOTED            = QUASI_QUOTED_OPEN EXPRESSION
+SPLICE_UNQUOTED         = SPLICE_UNQUOTED_OPEN EXPRESSION
+UNQUOTED                = UNQUOTED_OPEN EXPRESSION
+DEREFED                 = DEREF_OPEN EXPRESSION
+META                    = META_OPEN EXPRESSION EXPRESSION
+KEYWORD                 = KEYWORD_OPEN SYMBOL
+
+KEYWORD_OPEN            = ":"
+QUOTED_OPEN             = "'"
+QUASI_QUOTED_OPEN       = "`"
+SPLICE_UNQUOTED_OPEN    = "~@"
+UNQUOTED_OPEN           = "~"
+DEREF_OPEN              = "@"
+META_OPEN               = "^"
+LEFT_PAREN              = "("
+RIGHT_PAREN             = ")"
+LEFT_BRACKET            = "["
+RIGHT_BRACKET           = "]"
+LEFT_CURLY_BRACKET      = "{"
+RIGHT_CURLY_BRACKET     = "}"
+OPEN_QUOTE              = "\""
+CLOSE_QUOTE             = "\""
+COMMENT                 = ~r";.*"
+WHITE_SPACE             = ~r"[\s,]+"
